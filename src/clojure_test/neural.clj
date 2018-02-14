@@ -96,8 +96,5 @@
    (if (= learn-iterations 0)
      weights
      (let [generated-number (rand-int 10)]
-       (recur train-data (change-weights-after-classify))
-       )
-     )
-    )
+       (recur train-data (change-weights-after-classify generated-number (nth train-data generated-number) learn-iterations)))))
   )
