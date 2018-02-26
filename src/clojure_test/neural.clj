@@ -23,7 +23,7 @@
   (if (or (empty? first-seq) (empty? second-seq))
     result
     (let [x 1]
-      (println result)
+      ;(println result)
       (recur (rest first-seq) (rest second-seq) (apply-fx (first first-seq) (first second-seq) result) apply-fx)
       )
     ))
@@ -55,16 +55,26 @@
     (> result bias)))
 
 (defn change-weights-after-classify
-  [generated-number inputs weights]
-  (if (not (= generated-number 5))
-    (if (proceed inputs weights 7)
-      (decrease-weights inputs weights)
+  [learning-number bias generated-number inputs weights]
+  (if (not (= generated-number learning-number))
+    (if (proceed inputs weights bias)
+      (let []
+        (println (str "Network says it's 5 when it's " generated-number))
+        (decrease-weights inputs weights))
       weights)
-    (if (not (proceed inputs weights 7))
-      (increase-weights inputs weights)
+    (if (not (proceed inputs weights bias))
+      (let []
+        (println (str "Network says it's NOT 5 when it IS "))
+        (increase-weights inputs weights))
       weights)
     )
   )
+
+(defn train-iteration
+  [learning-number bias]
+  (partial change-weights-after-classify learning-number bias))
+
+(def train-fx (train-iteration 5 7))
 
 (defn learn-neural
   ([learn-iterations]
@@ -91,10 +101,15 @@
                       )
          weights
          (generate-weights 0 15)]
+     (let [final-weights (learn-neural train-data weights learn-iterations)]
+       (map #(let [] (println (str "Proceeds approximate 5: " (proceed % final-weights 7)))) test-data)
+       )
      ))
   ([train-data weights learn-iterations]
    (if (= learn-iterations 0)
      weights
      (let [generated-number (rand-int 10)]
-       (recur train-data (change-weights-after-classify generated-number (nth train-data generated-number) learn-iterations)))))
+       (println (str learn-iterations " iterations left. Guessing number: " generated-number))
+       (println (str "Weights are: " weights "\n"))
+       (recur train-data (train-fx generated-number (nth train-data generated-number) weights) (- learn-iterations 1)))))
   )
